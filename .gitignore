@@ -1,0 +1,5 @@
+node_modules/
+release/*
+!release/SideGlass-0.1.0.exe
+dist/
+*.log

@@ -1,0 +1,43 @@
+{
+  "name": "sideglass",
+  "version": "0.1.0",
+  "description": "A tiny always-on-top AI side window for ChatGPT, Claude, and Gemini.",
+  "main": "src/main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --win portable"
+  },
+  "keywords": [
+    "ai",
+    "overlay",
+    "electron",
+    "chatgpt",
+    "claude",
+    "gemini"
+  ],
+  "author": "Hasnain Abbas",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.hasnain.sideglass",
+    "productName": "SideGlass",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "artifactName": "SideGlass-${version}.${ext}"
+    }
+  }
+}

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SideGlass</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <aside class="rail" aria-hidden="true"></aside>
+
+      <header class="topbar">
+        <section class="brand drag-region">
+          <span class="mark"></span>
+          <div>
+            <h1>SideGlass</h1>
+            <p>Ctrl Alt Space</p>
+          </div>
+        </section>
+
+        <nav class="providers" aria-label="AI provider">
+          <button class="provider active" data-provider="chatgpt" type="button">ChatGPT</button>
+          <button class="provider" data-provider="claude" type="button">Claude</button>
+          <button class="provider" data-provider="gemini" type="button">Gemini</button>
+        </nav>
+
+        <section class="controls">
+          <button class="icon-button" id="pinButton" type="button" title="Keep on top" aria-label="Keep on top">
+            <span>◆</span>
+          </button>
+          <label class="opacity" title="Window transparency">
+            <span>Opacity</span>
+            <input id="opacitySlider" type="range" min="58" max="100" value="86" />
+          </label>
+          <button class="icon-button" id="hideButton" type="button" title="Hide window" aria-label="Hide window">
+            <span>−</span>
+          </button>
+          <button class="icon-button close" id="closeButton" type="button" title="Quit SideGlass" aria-label="Quit SideGlass">
+            <span>×</span>
+          </button>
+        </section>
+      </header>
+
+      <section class="stage">
+        <div class="loading" id="loading">
+          <span class="pulse"></span>
+          <p>Opening provider</p>
+        </div>
+        <webview
+          id="aiView"
+          partition="persist:sideglass-ai"
+          allowpopups
+          webpreferences="nativeWindowOpen=yes"
+        ></webview>
+      </section>
+
+      <footer class="statusbar">
+        <span id="statusText">Ready</span>
+        <button id="reloadButton" type="button">Reload</button>
+      </footer>
+    </main>
+
+    <script src="./renderer.js"></script>
+  </body>
+</html>
