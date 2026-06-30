@@ -1,6 +1,6 @@
 {
   "name": "sideglass",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A tiny always-on-top AI side window for ChatGPT, Claude, and Gemini.",
   "main": "src/main.js",
   "private": true,
@@ -31,9 +31,11 @@
     },
     "files": [
       "src/**/*",
+      "build/icon.png",
       "package.json"
     ],
     "win": {
+      "icon": "build/icon.png",
       "target": [
         "portable"
       ],

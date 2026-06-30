@@ -13,6 +13,7 @@ const CHROME_UA =
   "(KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36";
 
 let mainWindow;
+let boundsSaveTimer;
 let settings = {
   provider: "chatgpt",
   opacity: 0.86,
@@ -37,10 +38,37 @@ function settingsPath() {
 function readSettings() {
   try {
     const saved = JSON.parse(fs.readFileSync(settingsPath(), "utf8"));
-    settings = { ...settings, ...saved };
+    settings = sanitizeSettings({ ...settings, ...saved });
   } catch {
     // First launch is expected to have no settings file.
   }
+}
+
+function sanitizeSettings(candidate) {
+  const next = { ...settings };
+
+  if (candidate && PROVIDERS[candidate.provider]) next.provider = candidate.provider;
+  if (candidate && Number.isFinite(candidate.opacity)) {
+    next.opacity = Math.max(0.58, Math.min(1, candidate.opacity));
+  }
+  if (candidate && typeof candidate.alwaysOnTop === "boolean") {
+    next.alwaysOnTop = candidate.alwaysOnTop;
+  }
+
+  const bounds = candidate && candidate.bounds;
+  if (
+    bounds &&
+    [bounds.x, bounds.y, bounds.width, bounds.height].every(Number.isFinite)
+  ) {
+    next.bounds = {
+      x: Math.round(bounds.x),
+      y: Math.round(bounds.y),
+      width: Math.max(340, Math.round(bounds.width)),
+      height: Math.max(460, Math.round(bounds.height))
+    };
+  }
+
+  return next;
 }
 
 function saveSettings() {
@@ -54,8 +82,8 @@ function saveSettings() {
 
 function defaultBounds() {
   const display = screen.getPrimaryDisplay().workArea;
-  const width = Math.min(430, Math.floor(display.width * 0.34));
-  const height = Math.max(620, display.height - 64);
+  const width = Math.min(display.width, Math.max(340, Math.min(430, Math.floor(display.width * 0.34))));
+  const height = Math.min(display.height, Math.max(460, display.height - 64));
   return {
     width,
     height,
@@ -64,8 +92,24 @@ function defaultBounds() {
   };
 }
 
+function visibleBounds(savedBounds) {
+  if (!savedBounds) return defaultBounds();
+
+  const display = screen.getDisplayMatching(savedBounds).workArea;
+  const width = Math.min(display.width, Math.max(340, savedBounds.width));
+  const height = Math.min(display.height, Math.max(460, savedBounds.height));
+
+  return {
+    width,
+    height,
+    x: Math.max(display.x, Math.min(savedBounds.x, display.x + display.width - width)),
+    y: Math.max(display.y, Math.min(savedBounds.y, display.y + display.height - height))
+  };
+}
+
 function createWindow() {
-  const bounds = settings.bounds || defaultBounds();
+  const bounds = visibleBounds(settings.bounds);
+  settings.bounds = bounds;
   log(`createWindow ${JSON.stringify(bounds)}`);
 
   mainWindow = new BrowserWindow({
@@ -79,11 +123,12 @@ function createWindow() {
     alwaysOnTop: settings.alwaysOnTop,
     skipTaskbar: false,
     title: "SideGlass",
+    icon: path.join(__dirname, "..", "build", "icon.png"),
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false,
+      sandbox: true,
       webviewTag: true
     }
   });
@@ -110,12 +155,19 @@ function createWindow() {
     return { action: "deny" };
   });
 
-  mainWindow.webContents.on("will-attach-webview", (_event, webPreferences, params) => {
+  mainWindow.webContents.on("will-attach-webview", (event, webPreferences, params) => {
+    if (!Object.values(PROVIDERS).includes(params.src)) {
+      event.preventDefault();
+      log(`blocked unexpected webview source ${params.src}`);
+      return;
+    }
+
     webPreferences.partition = "persist:sideglass-ai";
     webPreferences.nodeIntegration = false;
     webPreferences.contextIsolation = true;
     webPreferences.sandbox = true;
-    webPreferences.plugins = true;
+    webPreferences.webSecurity = true;
+    delete webPreferences.preload;
     params.useragent = CHROME_UA;
   });
 }
@@ -123,7 +175,8 @@ function createWindow() {
 function rememberBounds() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   settings.bounds = mainWindow.getBounds();
-  saveSettings();
+  clearTimeout(boundsSaveTimer);
+  boundsSaveTimer = setTimeout(saveSettings, 250);
 }
 
 function toggleWindow() {
@@ -136,21 +189,36 @@ function toggleWindow() {
   mainWindow.focus();
 }
 
-app.whenReady().then(() => {
-  log("app ready");
-  readSettings();
-  createWindow();
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
 
-  const shortcutRegistered = globalShortcut.register("CommandOrControl+Alt+Space", toggleWindow);
-  log(`shortcut registered ${shortcutRegistered}`);
-
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+if (!hasSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
   });
-});
+
+  app.whenReady().then(() => {
+    log("app ready");
+    readSettings();
+    createWindow();
+
+    const shortcutRegistered = globalShortcut.register("CommandOrControl+Alt+Space", toggleWindow);
+    log(`shortcut registered ${shortcutRegistered}`);
+
+    app.on("activate", () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    });
+  });
+}
 
 app.on("will-quit", () => {
   log("will quit");
+  clearTimeout(boundsSaveTimer);
+  saveSettings();
   globalShortcut.unregisterAll();
 });
 
@@ -173,7 +241,7 @@ ipcMain.handle("settings:get", () => ({
 }));
 
 ipcMain.handle("settings:set", (_event, patch) => {
-  settings = { ...settings, ...patch };
+  settings = sanitizeSettings({ ...settings, ...patch });
 
   if (mainWindow && !mainWindow.isDestroyed()) {
     if (typeof patch.opacity === "number") mainWindow.setOpacity(patch.opacity);
@@ -184,6 +252,12 @@ ipcMain.handle("settings:set", (_event, patch) => {
 
   saveSettings();
   return settings;
+});
+
+ipcMain.handle("provider:openExternal", (_event, provider) => {
+  if (!PROVIDERS[provider]) return false;
+  shell.openExternal(PROVIDERS[provider]);
+  return true;
 });
 
 ipcMain.handle("window:hide", () => {

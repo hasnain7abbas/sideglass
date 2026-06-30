@@ -3,49 +3,63 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; frame-src https:; object-src 'none'; base-uri 'none'"
+    />
     <title>SideGlass</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
-  <body>
+  <body data-provider="chatgpt">
     <main class="shell">
-      <aside class="rail" aria-hidden="true"></aside>
+      <aside class="signal-rail" aria-hidden="true"></aside>
 
       <header class="topbar">
-        <section class="brand drag-region">
-          <span class="mark"></span>
-          <div>
-            <h1>SideGlass</h1>
-            <p>Ctrl Alt Space</p>
-          </div>
-        </section>
+        <div class="titlebar">
+          <section class="brand drag-region">
+            <span class="mark" aria-hidden="true"><i></i></span>
+            <div>
+              <h1>SideGlass</h1>
+              <p>Ctrl + Alt + Space</p>
+            </div>
+          </section>
 
-        <nav class="providers" aria-label="AI provider">
-          <button class="provider active" data-provider="chatgpt" type="button">ChatGPT</button>
-          <button class="provider" data-provider="claude" type="button">Claude</button>
-          <button class="provider" data-provider="gemini" type="button">Gemini</button>
-        </nav>
+          <section class="window-controls">
+            <button class="icon-button" id="pinButton" type="button" title="Keep on top" aria-label="Keep on top" aria-pressed="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17v5M5 17h14M17 3a1 1 0 0 1 1 1v3.3a2 2 0 0 0 .6 1.4l.7.7a1 1 0 0 1-.7 1.6H5.4a1 1 0 0 1-.7-1.7l.7-.7A2 2 0 0 0 6 7.2V4a1 1 0 0 1 1-1z" /></svg>
+            </button>
+            <button class="icon-button" id="hideButton" type="button" title="Hide window" aria-label="Hide window">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /></svg>
+            </button>
+            <button class="icon-button close" id="closeButton" type="button" title="Quit SideGlass" aria-label="Quit SideGlass">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+            </button>
+          </section>
+        </div>
 
-        <section class="controls">
-          <button class="icon-button" id="pinButton" type="button" title="Keep on top" aria-label="Keep on top">
-            <span>◆</span>
-          </button>
-          <label class="opacity" title="Window transparency">
-            <span>Opacity</span>
-            <input id="opacitySlider" type="range" min="58" max="100" value="86" />
+        <div class="toolbar">
+          <nav class="providers" aria-label="AI provider" role="tablist">
+            <button class="provider active" data-provider="chatgpt" type="button" role="tab" aria-selected="true">ChatGPT</button>
+            <button class="provider" data-provider="claude" type="button" role="tab" aria-selected="false">Claude</button>
+            <button class="provider" data-provider="gemini" type="button" role="tab" aria-selected="false">Gemini</button>
+          </nav>
+
+          <label class="opacity" title="Window opacity">
+            <output id="opacityValue" for="opacitySlider">86%</output>
+            <input id="opacitySlider" type="range" min="58" max="100" value="86" aria-label="Window opacity" />
           </label>
-          <button class="icon-button" id="hideButton" type="button" title="Hide window" aria-label="Hide window">
-            <span>−</span>
-          </button>
-          <button class="icon-button close" id="closeButton" type="button" title="Quit SideGlass" aria-label="Quit SideGlass">
-            <span>×</span>
-          </button>
-        </section>
+        </div>
       </header>
 
       <section class="stage">
         <div class="loading" id="loading">
-          <span class="pulse"></span>
-          <p>Opening provider</p>
+          <span class="loading-mark" aria-hidden="true"><i></i></span>
+          <p id="loadingTitle">Opening provider</p>
+          <p class="loading-detail" id="loadingDetail">Connecting to your existing web session</p>
+          <div class="loading-actions" id="loadingActions">
+            <button id="retryButton" type="button">Try again</button>
+            <button class="secondary" id="openBrowserButton" type="button">Open in browser</button>
+          </div>
         </div>
         <webview
           id="aiView"
@@ -56,8 +70,15 @@
       </section>
 
       <footer class="statusbar">
-        <span id="statusText">Ready</span>
-        <button id="reloadButton" type="button">Reload</button>
+        <span class="status"><i id="statusDot"></i><span id="statusText">Ready</span></span>
+        <span class="footer-actions">
+          <button class="footer-button" id="openExternalButton" type="button" title="Open in browser" aria-label="Open in browser">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /></svg>
+          </button>
+          <button class="footer-button" id="reloadButton" type="button" title="Reload provider" aria-label="Reload provider">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8.1 8.1 0 1 0-2.3 5.7L20 15M20 4v7h-7" /></svg>
+          </button>
+        </span>
       </footer>
     </main>
 
