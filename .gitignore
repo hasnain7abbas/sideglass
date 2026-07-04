@@ -1,6 +1,6 @@
 node_modules/
 release/*
-!release/SideGlass-*.exe
+!release/SideGlass-[0-9]*.exe
 dist/
 build/SideGlassBrowserHost.exe
 *.log
