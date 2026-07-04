@@ -9,18 +9,23 @@
   [![No API key](https://img.shields.io/badge/API_key-not_required-10a37f?style=flat-square)](#how-it-works)
   [![MIT License](https://img.shields.io/badge/license-MIT-262a2c?style=flat-square)](LICENSE)
 
-  [Download for Windows](https://github.com/hasnain7abbas/sideglass/releases/latest/download/SideGlass-0.2.0.exe)
+  [Install for Windows](https://github.com/hasnain7abbas/sideglass/releases/latest/download/SideGlass-Setup-0.3.0.exe)
+  &nbsp; | &nbsp;
+  [Portable version](https://github.com/hasnain7abbas/sideglass/releases/latest/download/SideGlass-0.3.0.exe)
 </div>
 
 ![SideGlass open beside a document](docs/sideglass-preview.png)
 
 SideGlass is the small window I wanted while reading and writing: ChatGPT, Claude, or Gemini stays beside the current document instead of pulling the whole workflow into a browser. The window is translucent, always available through one shortcut, and quiet enough to leave open.
 
+Version 0.3 uses your normal Chrome or Edge session instead of an embedded login page. Existing accounts remain signed in, Google authentication works in the supported browser context, and SideGlass still keeps the provider fitted inside its compact frame.
+
 ## What it does
 
 - Keeps a compact AI window above other applications.
 - Switches between ChatGPT, Claude, and Gemini in one place.
-- Uses the providers' normal websites and your existing accounts, with no paid API key.
+- Reuses your normal Chrome or Edge profile, including existing provider sessions.
+- Uses the providers' real websites with no paid API key.
 - Remembers the selected provider, opacity, pin state, size, and position.
 - Restores an off-screen window safely after monitor changes.
 - Provides retry and browser fallback actions when a provider cannot load.
@@ -34,19 +39,25 @@ SideGlass is the small window I wanted while reading and writing: ChatGPT, Claud
 | Pin | Toggle always-on-top mode |
 | Opacity slider | Adjust the whole window from 58% to 100% |
 | Reload | Reload the current provider |
-| External link | Open the current provider in your browser |
+| External link | Sign in or open the current provider in the full browser |
 
 Drag the title area to move the window. Resize it from any edge like a normal desktop app.
 
+## Signing in
+
+SideGlass normally picks up the accounts already signed in to Chrome or Edge. If a provider still asks you to log in, use the external-link button in the footer. Complete sign-in in the full browser window, return to SideGlass, and press reload. The browser owns the session throughout; SideGlass does not copy passwords or cookies.
+
+This avoids the embedded-browser authentication restrictions that can otherwise block Google login or trigger an incorrect security-key prompt.
+
 ## How it works
 
-SideGlass is an Electron shell around each provider's real web app. Sign-in cookies and site data stay in a dedicated persistent session on your computer. SideGlass does not send prompts through its own server and does not require API credentials.
+SideGlass hosts a borderless Chrome or Edge app window inside its Electron frame and manages its size, visibility, opacity, and provider switching. It does not send prompts through its own server and does not require API credentials.
 
-Provider account rules and usage limits still apply. Their websites can also change without notice, so login challenges, CAPTCHA, or temporary embedding issues may occasionally appear.
+Provider account rules and usage limits still apply. Their websites can also change without notice, so login challenges, CAPTCHA, or temporary layout issues may occasionally appear.
 
 ## Run from source
 
-You need [Node.js](https://nodejs.org/) and npm.
+You need [Node.js](https://nodejs.org/), npm, and Google Chrome or Microsoft Edge on Windows.
 
 ```powershell
 git clone https://github.com/hasnain7abbas/sideglass.git
@@ -55,17 +66,23 @@ npm install
 npm start
 ```
 
-Build the portable Windows executable with:
+Build the recommended installer with:
+
+```powershell
+npm run dist:installer
+```
+
+Build the portable executable with:
 
 ```powershell
 npm run dist
 ```
 
-The output is written to `release/SideGlass-0.2.0.exe`.
+The outputs are written to `release/SideGlass-Setup-0.3.0.exe` and `release/SideGlass-0.3.0.exe`.
 
 ## Windows note
 
-The current portable build is not code-signed, so Windows SmartScreen may show a warning on first launch. The source and complete local build command are available above for anyone who prefers to build it directly.
+The current builds are not code-signed, so Windows SmartScreen may show a warning on first launch. The installer is recommended because it launches directly after the one-time installation; the portable version must unpack itself on every launch.
 
 ## License
 
