@@ -11,7 +11,8 @@
     "prepack": "npm run build:host",
     "pack": "electron-builder --dir",
     "predist": "npm run build:host",
-    "dist": "electron-builder --win portable"
+    "dist": "electron-builder --win portable",
+    "dist:installer": "npm run build:host && electron-builder --win nsis"
   },
   "keywords": [
     "ai",
@@ -50,6 +51,13 @@
         "portable"
       ],
       "artifactName": "SideGlass-${version}.${ext}"
+    },
+    "nsis": {
+      "artifactName": "SideGlass-Setup-${version}.${ext}",
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
     }
   }
 }
