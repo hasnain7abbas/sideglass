@@ -1,5 +1,5 @@
 const providerButtons = [...document.querySelectorAll(".provider")];
-const aiView = document.querySelector("#aiView");
+const stage = document.querySelector("#browserSurface");
 const loading = document.querySelector("#loading");
 const statusText = document.querySelector("#statusText");
 const statusDot = document.querySelector("#statusDot");
@@ -16,10 +16,9 @@ const loadingTitle = document.querySelector("#loadingTitle");
 const loadingDetail = document.querySelector("#loadingDetail");
 const loadingActions = document.querySelector("#loadingActions");
 
-let providers = {};
 let currentProvider = "chatgpt";
 let alwaysOnTop = true;
-let loadTimer;
+let resizeFrame;
 
 function providerLabel(key) {
   return {
@@ -34,37 +33,29 @@ function setStatus(text, state = "ready") {
   statusDot.dataset.state = state;
 }
 
-function setLoading(isLoading, title = "Opening provider", detail = "Connecting to your existing web session") {
+function setLoading(isLoading, title = "Opening provider", detail = "Connecting to your browser session") {
   loading.classList.toggle("hidden", !isLoading);
   loading.classList.remove("error");
   loadingTitle.textContent = title;
   loadingDetail.textContent = detail;
   loadingActions.classList.remove("visible");
+  providerButtons.forEach((button) => {
+    button.disabled = isLoading;
+  });
+  reloadButton.disabled = isLoading;
 }
 
 function setLoadError(detail) {
-  clearTimeout(loadTimer);
   loading.classList.remove("hidden");
   loading.classList.add("error");
-  loadingTitle.textContent = `${providerLabel(currentProvider)} could not load`;
+  loadingTitle.textContent = `${providerLabel(currentProvider)} could not open`;
   loadingDetail.textContent = detail;
   loadingActions.classList.add("visible");
-  setStatus("Connection problem", "error");
-}
-
-function finishLoading() {
-  clearTimeout(loadTimer);
-  setLoading(false);
-  setStatus(`${providerLabel(currentProvider)} ready`);
-}
-
-function startLoad(title) {
-  setLoading(true, title);
-  setStatus(title, "loading");
-  clearTimeout(loadTimer);
-  loadTimer = setTimeout(() => {
-    setLoadError("The provider is taking longer than expected. Check your connection or try again.");
-  }, 30000);
+  providerButtons.forEach((button) => {
+    button.disabled = false;
+  });
+  reloadButton.disabled = false;
+  setStatus("Browser connection problem", "error");
 }
 
 function updateProviderButtons() {
@@ -76,18 +67,39 @@ function updateProviderButtons() {
   document.body.dataset.provider = currentProvider;
 }
 
+function updateOpacityTrack(value) {
+  const min = Number(opacitySlider.min);
+  const max = Number(opacitySlider.max);
+  const progress = ((Number(value) - min) / (max - min)) * 100;
+  opacitySlider.style.setProperty("--range-progress", `${progress}%`);
+}
+
+async function reportBrowserBounds() {
+  const bounds = stage.getBoundingClientRect();
+  await window.sideglass.setBrowserBounds({
+    x: bounds.x,
+    y: bounds.y,
+    width: bounds.width,
+    height: bounds.height
+  });
+}
+
 async function switchProvider(provider) {
-  if (!providers[provider]) return;
+  if (!["chatgpt", "claude", "gemini"].includes(provider)) return;
   currentProvider = provider;
   updateProviderButtons();
-  startLoad(`Opening ${providerLabel(provider)}`);
-  aiView.src = providers[provider];
-  await window.sideglass.setSettings({ provider });
+  setLoading(true, `Opening ${providerLabel(provider)}`);
+  setStatus(`Opening ${providerLabel(provider)}`, "loading");
+  const opened = await window.sideglass.activateProvider(provider);
+  if (!opened) {
+    setLoadError("Chrome or Edge could not open this provider. Try again or open it in the browser.");
+  }
 }
 
 async function setOpacity(value) {
   const opacity = Math.max(0.58, Math.min(1, Number(value) / 100));
   opacityValue.textContent = `${Math.round(opacity * 100)}%`;
+  updateOpacityTrack(value);
   await window.sideglass.setSettings({ opacity });
 }
 
@@ -99,26 +111,35 @@ async function setPinned(nextValue) {
   await window.sideglass.setSettings({ alwaysOnTop });
 }
 
-function reloadProvider() {
-  startLoad(`Reloading ${providerLabel(currentProvider)}`);
-  aiView.reload();
+async function reloadProvider() {
+  setLoading(true, `Reloading ${providerLabel(currentProvider)}`);
+  setStatus(`Reloading ${providerLabel(currentProvider)}`, "loading");
+  const opened = await window.sideglass.reloadProvider();
+  if (!opened) setLoadError("The browser window could not be reloaded. Try opening the provider in Chrome.");
 }
 
-function openProviderInBrowser() {
-  return window.sideglass.openProviderInBrowser(currentProvider);
+async function openProviderInBrowser() {
+  const opened = await window.sideglass.openProviderInBrowser(currentProvider);
+  if (opened) setStatus(`Sign-in opened in Chrome`);
 }
 
 async function boot() {
   const settings = await window.sideglass.getSettings();
-  providers = settings.providers;
   currentProvider = settings.provider || "chatgpt";
   alwaysOnTop = settings.alwaysOnTop !== false;
 
   opacitySlider.value = Math.round((settings.opacity || 0.86) * 100);
   opacityValue.textContent = `${opacitySlider.value}%`;
+  updateOpacityTrack(opacitySlider.value);
   pinButton.classList.toggle("active", alwaysOnTop);
   pinButton.setAttribute("aria-pressed", String(alwaysOnTop));
   updateProviderButtons();
+  await reportBrowserBounds();
+
+  if (!settings.browserAvailable) {
+    setLoadError("Install Google Chrome or Microsoft Edge to use SideGlass without API keys.");
+    return;
+  }
   await switchProvider(currentProvider);
 }
 
@@ -131,27 +152,29 @@ pinButton.addEventListener("click", () => setPinned(!alwaysOnTop));
 hideButton.addEventListener("click", () => window.sideglass.hide());
 closeButton.addEventListener("click", () => window.sideglass.close());
 reloadButton.addEventListener("click", reloadProvider);
-retryButton.addEventListener("click", reloadProvider);
+retryButton.addEventListener("click", () => switchProvider(currentProvider));
 openExternalButton.addEventListener("click", openProviderInBrowser);
 openBrowserButton.addEventListener("click", openProviderInBrowser);
 
-aiView.addEventListener("did-start-loading", () => {
-  startLoad(`Opening ${providerLabel(currentProvider)}`);
+window.sideglass.onBrowserStatus((status) => {
+  if (status.provider && status.provider !== currentProvider) return;
+  if (status.state === "loading") {
+    setLoading(true, status.text);
+    setStatus(status.text, "loading");
+    return;
+  }
+  if (status.state === "ready") {
+    setLoading(false);
+    setStatus(status.text);
+    return;
+  }
+  if (status.state === "error") setLoadError(status.text);
 });
 
-aiView.addEventListener("did-stop-loading", finishLoading);
-aiView.addEventListener("dom-ready", finishLoading);
-
-aiView.addEventListener("did-fail-load", (event) => {
-  if (event.errorCode === -3 || event.isMainFrame === false) return;
-  setLoadError(event.errorDescription || "Check your internet connection and try again.");
+const resizeObserver = new ResizeObserver(() => {
+  cancelAnimationFrame(resizeFrame);
+  resizeFrame = requestAnimationFrame(reportBrowserBounds);
 });
-
-aiView.addEventListener("render-process-gone", () => {
-  setLoadError("The provider page stopped responding. Reload it to continue.");
-});
-
-window.addEventListener("offline", () => setLoadError("You appear to be offline. Reconnect, then try again."));
-window.addEventListener("online", () => setStatus("Back online"));
+resizeObserver.observe(stage);
 
 boot();

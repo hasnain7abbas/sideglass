@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; frame-src https:; object-src 'none'; base-uri 'none'"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'"
     />
     <title>SideGlass</title>
     <link rel="stylesheet" href="./styles.css" />
@@ -51,28 +51,23 @@
         </div>
       </header>
 
-      <section class="stage">
+      <section class="stage" id="browserSurface">
+        <div class="browser-well" aria-hidden="true"></div>
         <div class="loading" id="loading">
           <span class="loading-mark" aria-hidden="true"><i></i></span>
           <p id="loadingTitle">Opening provider</p>
-          <p class="loading-detail" id="loadingDetail">Connecting to your existing web session</p>
+          <p class="loading-detail" id="loadingDetail">Connecting to your browser session</p>
           <div class="loading-actions" id="loadingActions">
             <button id="retryButton" type="button">Try again</button>
             <button class="secondary" id="openBrowserButton" type="button">Open in browser</button>
           </div>
         </div>
-        <webview
-          id="aiView"
-          partition="persist:sideglass-ai"
-          allowpopups
-          webpreferences="nativeWindowOpen=yes"
-        ></webview>
       </section>
 
       <footer class="statusbar">
         <span class="status"><i id="statusDot"></i><span id="statusText">Ready</span></span>
         <span class="footer-actions">
-          <button class="footer-button" id="openExternalButton" type="button" title="Open in browser" aria-label="Open in browser">
+          <button class="footer-button" id="openExternalButton" type="button" title="Sign in or open in Chrome" aria-label="Sign in or open in Chrome">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /></svg>
           </button>
           <button class="footer-button" id="reloadButton" type="button" title="Reload provider" aria-label="Reload provider">

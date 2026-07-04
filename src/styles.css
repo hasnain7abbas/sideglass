@@ -182,6 +182,12 @@ h1 {
   box-shadow: 0 2px 8px rgba(21, 24, 25, 0.1), inset 0 -2px 0 var(--accent);
 }
 
+.provider:disabled,
+.footer-button:disabled {
+  cursor: wait;
+  opacity: 0.56;
+}
+
 .icon-button {
   display: inline-grid;
   width: 28px;
@@ -238,9 +244,41 @@ h1 {
 }
 
 .opacity input {
+  --range-progress: 67%;
+  -webkit-appearance: none;
+  appearance: none;
   width: 100%;
+  height: 14px;
   min-width: 54px;
-  accent-color: var(--accent);
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.opacity input::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 4px;
+  border: 0;
+  border-radius: 2px;
+  background: linear-gradient(
+    to right,
+    var(--accent) 0,
+    var(--accent) var(--range-progress),
+    rgba(21, 24, 25, 0.2) var(--range-progress),
+    rgba(21, 24, 25, 0.2) 100%
+  );
+}
+
+.opacity input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4px;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 1px 4px rgba(21, 24, 25, 0.22);
 }
 
 .stage {
@@ -250,11 +288,12 @@ h1 {
   background: rgba(255, 255, 255, 0.48);
 }
 
-webview {
+.browser-well {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  border: 0;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.66);
 }
 
 .loading {

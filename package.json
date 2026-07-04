@@ -1,12 +1,16 @@
 {
   "name": "sideglass",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A tiny always-on-top AI side window for ChatGPT, Claude, and Gemini.",
   "main": "src/main.js",
   "private": true,
   "scripts": {
+    "build:host": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-browser-host.ps1",
+    "prestart": "npm run build:host",
     "start": "electron .",
+    "prepack": "npm run build:host",
     "pack": "electron-builder --dir",
+    "predist": "npm run build:host",
     "dist": "electron-builder --win portable"
   },
   "keywords": [
@@ -33,6 +37,12 @@
       "src/**/*",
       "build/icon.png",
       "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "build/SideGlassBrowserHost.exe",
+        "to": "SideGlassBrowserHost.exe"
+      }
     ],
     "win": {
       "icon": "build/icon.png",
