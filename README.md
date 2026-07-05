@@ -3,9 +3,10 @@
 
   # SideGlass
 
-  **Ask an AI without leaving the document in front of you.**
+  **Keep ChatGPT, Claude, or Gemini beside your work.**
 
   [![Windows](https://img.shields.io/badge/Windows-portable-1976d2?style=flat-square&logo=windows11&logoColor=white)](https://github.com/hasnain7abbas/sideglass/releases/latest)
+  [![CI](https://github.com/hasnain7abbas/sideglass/actions/workflows/ci.yml/badge.svg)](https://github.com/hasnain7abbas/sideglass/actions/workflows/ci.yml)
   [![No API key](https://img.shields.io/badge/API_key-not_required-10a37f?style=flat-square)](#how-it-works)
   [![MIT License](https://img.shields.io/badge/license-MIT-262a2c?style=flat-square)](LICENSE)
 
@@ -16,7 +17,7 @@
 
 ![SideGlass open beside a document](docs/sideglass-preview.png)
 
-SideGlass is the small window I wanted while reading and writing: ChatGPT, Claude, or Gemini stays beside the current document instead of pulling the whole workflow into a browser. The window is translucent, always available through one shortcut, and quiet enough to leave open.
+I built SideGlass because opening a browser whenever I had a question kept interrupting what I was reading or writing. It keeps ChatGPT, Claude, or Gemini beside the current document in a small translucent window, ready through one shortcut.
 
 Version 0.3 uses your normal Chrome or Edge session instead of an embedded login page. Existing accounts remain signed in, Google authentication works in the supported browser context, and SideGlass still keeps the provider fitted inside its compact frame.
 
@@ -76,6 +77,12 @@ Build the portable executable with:
 
 ```powershell
 npm run dist
+```
+
+Run the same source and text checks used by CI with:
+
+```powershell
+npm run check
 ```
 
 The outputs are written to `release/SideGlass-Setup-0.3.0.exe` and `release/SideGlass-0.3.0.exe`.
