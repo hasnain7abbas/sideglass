@@ -14,8 +14,8 @@
     "prepack": "npm run build:host",
     "pack": "electron-builder --dir",
     "predist": "npm run build:host",
-    "dist": "electron-builder --win portable",
-    "dist:installer": "npm run build:host && electron-builder --win nsis"
+    "dist": "electron-builder --win portable --publish never",
+    "dist:installer": "npm run build:host && electron-builder --win nsis --publish never"
   },
   "keywords": [
     "ai",
