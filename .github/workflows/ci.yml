@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-build:
+    name: Check and build
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check source and text
+        run: npm run check
+
+      - name: Compile browser host
+        run: npm run build:host
+
+      - name: Build Windows installer
+        run: npm run dist:installer
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: SideGlass-Windows-installer
+          path: release/SideGlass-Setup-*.exe
+          if-no-files-found: error
+          retention-days: 7

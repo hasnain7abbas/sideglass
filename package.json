@@ -5,6 +5,9 @@
   "main": "src/main.js",
   "private": true,
   "scripts": {
+    "check:syntax": "node --check src/main.js && node --check src/preload.js && node --check src/renderer.js && node --check scripts/check-text.js",
+    "check:text": "node scripts/check-text.js",
+    "check": "npm run check:syntax && npm run check:text",
     "build:host": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-browser-host.ps1",
     "prestart": "npm run build:host",
     "start": "electron .",
